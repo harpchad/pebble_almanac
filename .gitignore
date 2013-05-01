@@ -1,8 +1,8 @@
 #exclude pebble build environment
-include/
+include
 build/
-lib/
+lib
 pebble_app.ld
-tools/
+tools
 waf
 wscript
