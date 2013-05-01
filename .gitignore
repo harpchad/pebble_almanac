@@ -6,3 +6,5 @@ pebble_app.ld
 tools
 waf
 wscript
+.waf*
+.lock-waf*
