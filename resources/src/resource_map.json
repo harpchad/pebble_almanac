@@ -1,0 +1,23 @@
+{
+    "media": [
+        {
+            "defName": "ALMANAC_MENU_ICON",
+            "type": "png",
+            "file": "images/almanac.png"
+        },
+        {
+            "characterRegex": "[a-z]",
+            "defName": "FONT_MOON_PHASES_SUBSET_30",
+            "type": "font",
+            "file": "fonts/moon_phases.ttf"
+        },
+        {
+            "characterRegex": "[:0-9]",
+            "defName": "FONT_ROBOTO_BOLD_SUBSET_49",
+            "type": "font",
+            "file": "fonts/Roboto-Bold.ttf"
+        }
+    ],
+    "friendlyVersion": "VERSION",
+    "versionDefName": "APP_RESOURCES"
+}
