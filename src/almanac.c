@@ -4,7 +4,7 @@
 #include "xprintf.h"
 #include "pbl-math.h"
 #include "suncalc.h"
-	
+
 #define LAT 38.7601
 #define LON -90.7559  //East=positive, West=negative
 #define TZ -5.0 //TZ offset from UTC
@@ -53,16 +53,16 @@ bool isDST(int day, int month, int dow)
 //If 12 hour time, subtract 12 from hr if hr > 12
 int thr(int hr)
 {
-	return !clock_is_24h_style() && (hr > 12) ? hr - 12 : hr;
+    return !clock_is_24h_style() && (hr > 12) ? hr - 12 : hr;
 }
 
 //return julian day number for time
 int tm2jd(PblTm *time)
 {
-	int y,m;
-	y = time->tm_year + 1900;
-	m = time->tm_mon + 1;
-	return time->tm_mday-32075+1461*(y+4800+(m-14)/12)/4+367*(m-2-(m-14)/12*12)/12-3*((y+4900+(m-14)/12)/100)/4;
+    int y,m;
+    y = time->tm_year + 1900;
+    m = time->tm_mon + 1;
+    return time->tm_mday-32075+1461*(y+4800+(m-14)/12)/4+367*(m-2-(m-14)/12*12)/12-3*((y+4900+(m-14)/12)/100)/4;
 }
 
 int moon_phase(int jdn)
@@ -71,8 +71,8 @@ int moon_phase(int jdn)
     jd = jdn-2451550.1;
     jd /= 29.530588853;
     jd -= (int)jd;
-    return (int)(jd*26 + 0.5);                    /* scale fraction from 0-26 and round by adding 0.5 */
-}
+    return (int)(jd*27 + 0.5); /* scale fraction from 0-27 and round by adding 0.5 */
+}                              /* 0 = new, 14 = full */
 
 // Called once per day
 void handle_day(AppContextRef ctx, PebbleTickEvent *t) {
@@ -85,11 +85,10 @@ void handle_day(AppContextRef ctx, PebbleTickEvent *t) {
     static char date[] = "00/00/0000";
     static char moon[] = "m";
     int moonphase_number = 0;
-	double sunrise, sunset, dawn, dusk;
+    double sunrise, sunset, dawn, dusk;
     PblTm *time = t->tick_time;
     if(!t)
         get_time(time);
-	
 
     // date
     string_format_time(date, sizeof(date), "%m/%d/%Y", time);
@@ -97,30 +96,42 @@ void handle_day(AppContextRef ctx, PebbleTickEvent *t) {
 
     // moon
     moonphase_number = moon_phase(tm2jd(time));
-    moon[0] = (unsigned char)(moonphase_number+97);
-    //xsputf(moon,"%c",moonphase_number+97);
+    // correct for southern hemisphere
+    if ((moonphase_number > 0) && (LAT < 0))
+        moonphase_number = 28 - moonphase_number;
+    // select correct font char
+    if (moonphase_number == 14)
+    {
+        moon[0] = (unsigned char)(48);
+    } else if (moonphase_number == 0) {
+        moon[0] = (unsigned char)(49);
+    } else if (moonphase_number < 14) {
+        moon[0] = (unsigned char)(moonphase_number+96);
+    } else {
+        moon[0] = (unsigned char)(moonphase_number+95);
+    }
     text_layer_set_text(&moonLayer, moon);
-	
-	//sun rise set
-	getDayInfo(tm2jd(time), LAT, LON, &dawn, &sunrise, &sunset, &dusk);
-	dawn = dawn + 0.5  + (TZ/24.0);
-	sunrise = sunrise + 0.5  + (TZ/24.0);
-	sunset = sunset + 0.5 + (TZ/24);
-	dusk = dusk + 0.5 + (TZ/24);
+
+    //sun rise set
+    getDayInfo(tm2jd(time), LAT, LON, &dawn, &sunrise, &sunset, &dusk);
+    dawn = dawn + 0.5  + (TZ/24.0);
+    sunrise = sunrise + 0.5  + (TZ/24.0);
+    sunset = sunset + 0.5 + (TZ/24);
+    dusk = dusk + 0.5 + (TZ/24);
     //if (isDST(time->tm_mday,time->tm_mon,time->tm_wday))
-      //  ++time->tm_hour;
+    //  ++time->tm_hour;
 
     xsprintf(riseText,"%d:%02d  %d:%02d",
-			thr((int)((dawn-(int)dawn)*24.0)),(int)((dawn-(int)dawn)*1440.0+0.5)%60,
-			thr((int)((sunrise-(int)sunrise)*24.0)),(int)((sunrise-(int)sunrise)*1440.0+0.5)%60
-			);
-	xsprintf(setText,"%d:%02d  %d:%02d",
-	 		thr((int)((sunset-(int)sunset)*24.0)),(int)((sunset-(int)sunset)*1440.0+0.5)%60,
-			thr((int)((dusk-(int)dusk)*24.0)),(int)((dusk-(int)dusk)*1440.0+0.5)%60
-			);
-	
+             thr((int)((dawn-(int)dawn)*24.0)),(int)((dawn-(int)dawn)*1440.0+0.5)%60,
+             thr((int)((sunrise-(int)sunrise)*24.0)),(int)((sunrise-(int)sunrise)*1440.0+0.5)%60
+            );
+    xsprintf(setText,"%d:%02d  %d:%02d",
+             thr((int)((sunset-(int)sunset)*24.0)),(int)((sunset-(int)sunset)*1440.0+0.5)%60,
+             thr((int)((dusk-(int)dusk)*24.0)),(int)((dusk-(int)dusk)*1440.0+0.5)%60
+            );
+
     text_layer_set_text(&riseLayer, riseText);
-	text_layer_set_text(&setLayer, setText);
+    text_layer_set_text(&setLayer, setText);
 }
 
 // Called once per minute
@@ -167,8 +178,8 @@ void handle_init(AppContextRef ctx) {
 
     resource_init_current_app(&APP_RESOURCES);
     font_moon = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_MOON_PHASES_SUBSET_30));
-	font_roboto = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_ROBOTO_BOLD_SUBSET_49));
-	
+    font_roboto = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_ROBOTO_BOLD_SUBSET_49));
+
     text_layer_init(&timeLayer, GRect(0, 55, 144 /* width */, 168-60 /* height */));
     text_layer_set_text_color(&timeLayer, GColorWhite);
     text_layer_set_background_color(&timeLayer, GColorClear);
@@ -209,15 +220,15 @@ void handle_init(AppContextRef ctx) {
 }
 
 void handle_deinit(AppContextRef ctx) {
-	(void)ctx;
-	fonts_unload_custom_font(font_moon);
-	fonts_unload_custom_font(font_roboto);
+    (void)ctx;
+    fonts_unload_custom_font(font_moon);
+    fonts_unload_custom_font(font_roboto);
 }
 
 void pbl_main(void *params) {
     PebbleAppHandlers handlers = {
         .init_handler = &handle_init,
-		.deinit_handler = &handle_deinit,
+        .deinit_handler = &handle_deinit,
         .tick_info = {
             .tick_handler = &handle_minute_tick,
             .tick_units = MINUTE_UNIT
