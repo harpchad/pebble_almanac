@@ -1,3 +1,6 @@
+/*
+ * Based on suncalc.js by Vladimir Agafonkin
+ */
 #include "pbl-math.h"
 #include "suncalc.h"
 #define J1970 2440588.0

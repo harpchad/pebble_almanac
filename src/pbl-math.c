@@ -1,4 +1,5 @@
 /*
+ * most functions from Michael Ehrmann
  * loosely based on 
  * - http://stackoverflow.com/questions/11261170/c-and-maths-fast-approximation-of-a-trigonometric-function
  * - http://www.codeproject.com/Articles/69941/Best-Square-Root-Method-Algorithm-Function-Precisi
