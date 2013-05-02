@@ -5,8 +5,7 @@
 #include "suncalc.h"
 #define J1970 2440588.0
 #define J2000 2451545.0
-#define PI 3.14159265358979323846
-#define deg2rad PI / 180.0
+#define deg2rad M_PI / 180.0
 #define M0 357.5291 * deg2rad
 #define M1 0.98560028 * deg2rad
 #define J0 0.0009
@@ -26,11 +25,11 @@
 #define h3 -18 * deg2rad //astronomical twilight angle
 
 double getJulianCycle( double J, float lw ) {
-    return pbl_round(J - J2000 - J0 - lw/(2 * PI));
+    return pbl_round(J - J2000 - J0 - lw/(2 * M_PI));
 }
 
 double getApproxSolarTransit( double Ht, float lw, double n ) {
-    return J2000 + J0 + (Ht + lw)/(2 * PI) + n;
+    return J2000 + J0 + (Ht + lw)/(2 * M_PI) + n;
 }
 
 double getSolarMeanAnomaly( double Js ) {
@@ -42,7 +41,7 @@ double getEquationOfCenter( double M ) {
 }
 
 double getEclipticLongitude( double M, double C ) {
-    return M + P + C + PI;
+    return M + P + C + M_PI;
 }
 
 double getSolarTransit( double Js, double M, double Lsun ) {
