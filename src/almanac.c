@@ -4,10 +4,8 @@
 #include "xprintf.h"
 #include "pbl-math.h"
 #include "suncalc.h"
+#include "config.h"
 
-#define LAT 38.7601
-#define LON -90.7559  //East=positive, West=negative
-#define TZ -5.0 //TZ offset from UTC
 //#define USEDST 1 //Attempt to use DST, formula is for (most of) USA, need a better way...
 
 #define MY_UUID { 0x02, 0xFC, 0xB5, 0x2F, 0xD4, 0x05, 0x4F, 0xD7, 0xB1, 0x13, 0x11, 0xE9, 0x76, 0x2B, 0xCA, 0x0C }
