@@ -89,7 +89,7 @@ void handle_day(AppContextRef ctx, PebbleTickEvent *t) {
         get_time(time);
 
     // date
-    string_format_time(date, sizeof(date), "%m/%d/%Y", time);
+    string_format_time(date, sizeof(date), DATEFMT, time);
     text_layer_set_text(&dateLayer, date);
 
     // moon
@@ -156,11 +156,11 @@ void handle_minute_tick(AppContextRef ctx, PebbleTickEvent *t) {
 
     // on the top of the hour
     if (t->tick_time->tm_min == 0) {
-
+#ifdef VIBHOUR
         // vibrate once if between 6am and 10pm
         if (t->tick_time->tm_hour >= 6 && t->tick_time->tm_hour <= 22)
             vibes_short_pulse();
-
+#endif
         //perform daily tasks is hour is 0
         if (t->tick_time->tm_hour == 0)
             handle_day(ctx, t);
