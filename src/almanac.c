@@ -115,15 +115,42 @@ void handle_day(AppContextRef ctx, PebbleTickEvent *t) {
     //if (isDST(time->tm_mday,time->tm_mon,time->tm_wday))
     //  ++time->tm_hour;
 
-    xsprintf(riseText,"%d:%02d  %d:%02d",
+    if (dawn == 99.0 || sunrise == 99.0) {
+      if (dawn == 99.0) {
+            xsprintf(riseText,"--:--  %d:%02d",
+             thr((int)sunrise),(int)((sunrise-(int)sunrise)*60.0+0.5)
+            );
+      } else if (sunrise == 99.0) {
+            xsprintf(riseText,"%d:%02d  --:--",
+             thr((int)dawn),(int)((dawn-(int)dawn)*60.0+0.5)
+            );
+      } else {
+            xsprintf(riseText,"--:--  --:--");
+      }
+    } else {
+            xsprintf(riseText,"%d:%02d  %d:%02d",
              thr((int)dawn),(int)((dawn-(int)dawn)*60.0+0.5),
              thr((int)sunrise),(int)((sunrise-(int)sunrise)*60.0+0.5)
             );
-    xsprintf(setText,"%d:%02d  %d:%02d",
+    }
+    if (sunset == 99.0 || dusk == 99.0) {
+      if (sunset == 99.0) {
+            xsprintf(setText,"--:--  %d:%02d",
+             thr((int)dusk),(int)((dusk-(int)dusk)*60.0+0.5)
+            );
+      } else if (dusk == 99.0) {
+            xsprintf(setText,"%d:%02d  --:--",
+             thr((int)sunset),(int)((sunset-(int)sunset)*60.0+0.5)
+            );
+      } else {
+            xsprintf(setText,"--:--  --:--");
+      }
+    } else {
+            xsprintf(setText,"%d:%02d  %d:%02d",
              thr((int)sunset),(int)((sunset-(int)sunset)*60.0+0.5),
              thr((int)dusk),(int)((dusk-(int)dusk)*60.0+0.5)
             );
-
+    }
     text_layer_set_text(&riseLayer, riseText);
     text_layer_set_text(&setLayer, setText);
 }
