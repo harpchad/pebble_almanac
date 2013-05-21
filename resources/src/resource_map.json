@@ -1,10 +1,9 @@
 {
     "media": [
         {
-            "characterRegex": "[:0-9]",
-            "defName": "FONT_ROBOTO_BOLD_SUBSET_49",
-            "type": "font",
-            "file": "fonts/Roboto-Bold.ttf"
+            "defName": "ALMANAC_MENU_ICON",
+            "type": "png",
+            "file": "images/almanac.png"
         },
         {
             "characterRegex": "[a-z01]",
@@ -13,9 +12,10 @@
             "file": "fonts/moon_phases.ttf"
         },
         {
-            "defName": "ALMANAC_MENU_ICON",
-            "type": "png",
-            "file": "images/almanac.png"
+            "characterRegex": "[:0-9]",
+            "defName": "FONT_ROBOTO_BOLD_SUBSET_49",
+            "type": "font",
+            "file": "fonts/Roboto-Bold.ttf"
         }
     ],
     "friendlyVersion": "VERSION",
