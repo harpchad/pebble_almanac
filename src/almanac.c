@@ -111,7 +111,7 @@ void handle_day(AppContextRef ctx, PebbleTickEvent *t) {
     text_layer_set_text(&moonLayer, moon);
 
     //sun rise set
-    sunmooncalc(time->tm_mday,time->tm_mon,time->tm_year+1900, TZ, LAT, LON, &dawn, &sunrise, &sunset, &dusk, &moonrise, &moonset);
+    sunmooncalc(time->tm_mday,time->tm_mon,time->tm_year+1900, TZ, LAT, -LON, &sunrise, &sunset, &dawn, &dusk, &moonrise, &moonset);
     //if (isDST(time->tm_mday,time->tm_mon,time->tm_wday))
     //  ++time->tm_hour;
 

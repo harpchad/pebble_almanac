@@ -223,7 +223,9 @@ void sunmooncalc(int d, int m, int y, int tz, float lat, float lon, float* sunri
 unsigned char rise,sett;
 int day,month,year, iobj,nz;
 double lambda,zone,phi,sphi,cphi;
-double tstart,date,hour,hh,utrise,utset;
+double tstart,date,hour,hh;
+double utrise=0.0;
+double utset=0.0;
 double y_minus,y_0,y_plus,zero1,zero2,xe,ye;
   double sinh0[] = {0,
    sn(+8.0/60.0),  /* moonrise          at h= +8'        */
