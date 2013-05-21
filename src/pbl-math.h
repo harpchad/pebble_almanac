@@ -5,7 +5,7 @@ float pbl_sqrt(float n);
 float pbl_floor(float x); 
 float pbl_fabs(float x);
 float pbl_atan(float x);
-float pbl_atan2(float y, float x);
+//float pbl_atan2(float y, float x);
 float pbl_rint (float x);
 float pbl_sin (float x);
 float pbl_cos(float x);

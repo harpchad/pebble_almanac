@@ -52,7 +52,7 @@ float pbl_atan(float x)
     return -(pbl_atan(-x));
   }
 }
-
+/*
 float pbl_atan2(float y, float x)
 {
   double z;
@@ -76,7 +76,7 @@ float pbl_atan2(float y, float x)
     }
   }
 }
-
+*/
 /* not quite rint(), i.e. results not properly rounded to nearest-or-even */
 float pbl_rint (float x)
 {

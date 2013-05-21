@@ -202,7 +202,7 @@ void mini_sun(double t, double* ra,double* dec)
 
 /*-----------------------------------------------------------------------*/
 /* SIN_ALT: sin(altitude)                                                */
-/*         IOBJ:  1=moon, >2=sun                                          */
+/*         IOBJ:  0=moon, >0=sun                                          */
 /*-----------------------------------------------------------------------*/
 double sin_alt(int iobj,double mjd0,double hour,double lambda,double cphi,double sphi)
   {
@@ -210,7 +210,7 @@ double sin_alt(int iobj,double mjd0,double hour,double lambda,double cphi,double
 
     mjd = mjd0 + hour/24.0;
     t   = (mjd-51544.5)/36525.0;
-    if (iobj==1)
+    if (iobj==0)
             mini_moon(t,&ra,&dec);
       else  mini_sun (t,&ra,&dec);
     tau = 15.0 * (lmst(mjd,lambda) - ra);
@@ -227,7 +227,7 @@ double tstart,date,hour,hh;
 double utrise=0.0;
 double utset=0.0;
 double y_minus,y_0,y_plus,zero1,zero2,xe,ye;
-  double sinh0[] = {0,
+  double sinh0[] = {
    sn(+8.0/60.0),  /* moonrise          at h= +8'        */
    sn(-50.0/60.0),  /* sunrise           at h=-50'        */
    sn(-6.0)};  /* civil twilight at h=-6 degrees */
@@ -242,7 +242,7 @@ double y_minus,y_0,y_plus,zero1,zero2,xe,ye;
     date = tstart;
     caldat(date+zone,&day,&month,&year,&hh);
 
-    for( iobj = 1; iobj <= 3; iobj ++)
+    for( iobj = 0; iobj <= 2; iobj ++)
 
       {
         hour = 1.0;
@@ -283,15 +283,15 @@ double y_minus,y_0,y_plus,zero1,zero2,xe,ye;
         if (rise!=true) utrise=99.0;
         if (sett!=true) utset=99.0;
         switch (iobj) {
-          case 1:
+          case 0:
             *moonrise = utrise;
             *moonset = utset;
             break;
-          case 2:
+          case 1:
             *sunrise = utrise;
             *sunset = utset;
             break;
-          case 3:
+          case 2:
             *dawn = utrise;
             *dusk = utset;
             break;
