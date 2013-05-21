@@ -247,13 +247,13 @@ void handle_init(AppContextRef ctx) {
     text_layer_set_font(&moonLayer, font_moon);
     text_layer_set_text_alignment(&moonLayer, GTextAlignmentCenter);
 
-    text_layer_init(&moonRise, GRect(0, 120, 62, 168-120 /* height */));
+    text_layer_init(&moonRise, GRect(0, 118, 50, 168-118 /* height */));
     text_layer_set_text_color(&moonRise, GColorWhite);
     text_layer_set_background_color(&moonRise, GColorClear);
     text_layer_set_font(&moonRise, fonts_get_system_font(FONT_KEY_GOTHIC_18));
     text_layer_set_text_alignment(&moonRise, GTextAlignmentRight);
 
-    text_layer_init(&moonSet, GRect(82, 120, 144-82, 168-120 /* height */));
+    text_layer_init(&moonSet, GRect(94, 118, 144-94, 168-118 /* height */));
     text_layer_set_text_color(&moonSet, GColorWhite);
     text_layer_set_background_color(&moonSet, GColorClear);
     text_layer_set_font(&moonSet, fonts_get_system_font(FONT_KEY_GOTHIC_18));
