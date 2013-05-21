@@ -21,6 +21,8 @@ TextLayer dateLayer; // The date
 TextLayer riseLayer; // sunrise
 TextLayer setLayer; // sunset
 TextLayer moonLayer; // moon phase
+TextLayer moonRise; // moonrise
+TextLayer moonSet; // moonset
 
 //Make fonts global so we can deinit later
 GFont font_roboto;
@@ -80,6 +82,8 @@ void handle_day(AppContextRef ctx, PebbleTickEvent *t) {
 
     static char riseText[] = "00:00  00:00";
     static char setText[] = "00:00  00:00";
+    static char moonriseText[] = "00:00";
+    static char moonsetText[] = "00:00";
     static char date[] = "00/00/0000";
     static char moon[] = "m";
     int moonphase_number = 0;
@@ -151,8 +155,20 @@ void handle_day(AppContextRef ctx, PebbleTickEvent *t) {
              thr((int)dusk),(int)((dusk-(int)dusk)*60.0+0.5)
             );
     }
+    if (moonrise==99.0) {
+      xsprintf(moonriseText,"--:--");
+    } else {
+      xsprintf(moonriseText,"%d:%02d",(int)moonrise,(int)((moonrise-(int)moonrise)*60.0+0.5));
+    }
+    if (moonset==99.0) {
+      xsprintf(moonsetText,"--:--");
+    } else {
+      xsprintf(moonsetText,"%d:%02d",(int)moonset,(int)((moonset-(int)moonset)*60.0+0.5));
+    }
     text_layer_set_text(&riseLayer, riseText);
     text_layer_set_text(&setLayer, setText);
+    text_layer_set_text(&moonSet, moonsetText);
+    text_layer_set_text(&moonRise, moonriseText);
 }
 
 // Called once per minute
@@ -231,6 +247,18 @@ void handle_init(AppContextRef ctx) {
     text_layer_set_font(&moonLayer, font_moon);
     text_layer_set_text_alignment(&moonLayer, GTextAlignmentCenter);
 
+    text_layer_init(&moonRise, GRect(0, 120, 62, 168-120 /* height */));
+    text_layer_set_text_color(&moonRise, GColorWhite);
+    text_layer_set_background_color(&moonRise, GColorClear);
+    text_layer_set_font(&moonRise, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+    text_layer_set_text_alignment(&moonRise, GTextAlignmentRight);
+
+    text_layer_init(&moonSet, GRect(82, 120, 144-82, 168-120 /* height */));
+    text_layer_set_text_color(&moonSet, GColorWhite);
+    text_layer_set_background_color(&moonSet, GColorClear);
+    text_layer_set_font(&moonSet, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+    text_layer_set_text_alignment(&moonSet, GTextAlignmentLeft);
+
     handle_day(ctx, NULL);
     handle_minute_tick(ctx, NULL);
     layer_add_child(&window.layer, &timeLayer.layer);
@@ -238,6 +266,8 @@ void handle_init(AppContextRef ctx) {
     layer_add_child(&window.layer, &riseLayer.layer);
     layer_add_child(&window.layer, &setLayer.layer);
     layer_add_child(&window.layer, &moonLayer.layer);
+    layer_add_child(&window.layer, &moonRise.layer);
+    layer_add_child(&window.layer, &moonSet.layer);
 }
 
 void handle_deinit(AppContextRef ctx) {
