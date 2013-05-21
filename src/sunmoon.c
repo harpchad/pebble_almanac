@@ -249,7 +249,7 @@ double y_minus,y_0,y_plus,zero1,zero2,xe,ye;
 
         y_minus = sin_alt(iobj,date,hour-1.0,lambda,cphi,sphi)
                     - sinh0[iobj];
-
+        rise = false; sett = false;
         /* loop over search intervals from [0h-2h] to [22h-24h]  */
         do {
 
