@@ -3,7 +3,7 @@
 #include "pebble_fonts.h"
 #include "xprintf.h"
 #include "pbl-math.h"
-#include "suncalc.h"
+#include "sunmoon.h"
 #include "config.h"
 
 //#define USEDST 1 //Attempt to use DST, formula is for (most of) USA, need a better way...
@@ -83,7 +83,7 @@ void handle_day(AppContextRef ctx, PebbleTickEvent *t) {
     static char date[] = "00/00/0000";
     static char moon[] = "m";
     int moonphase_number = 0;
-    double sunrise, sunset, dawn, dusk;
+    float sunrise, sunset, dawn, dusk, moonrise, moonset;
     PblTm *time = t->tick_time;
     if(!t)
         get_time(time);
@@ -111,21 +111,17 @@ void handle_day(AppContextRef ctx, PebbleTickEvent *t) {
     text_layer_set_text(&moonLayer, moon);
 
     //sun rise set
-    getDayInfo(tm2jd(time), LAT, LON, &dawn, &sunrise, &sunset, &dusk);
-    dawn = dawn + 0.5  + (TZ/24.0);
-    sunrise = sunrise + 0.5  + (TZ/24.0);
-    sunset = sunset + 0.5 + (TZ/24);
-    dusk = dusk + 0.5 + (TZ/24);
+    sunmooncalc(time->tm_mday,time->tm_mon,time->tm_year+1900, TZ, LAT, LON, &dawn, &sunrise, &sunset, &dusk, &moonrise, &moonset);
     //if (isDST(time->tm_mday,time->tm_mon,time->tm_wday))
     //  ++time->tm_hour;
 
     xsprintf(riseText,"%d:%02d  %d:%02d",
-             thr((int)((dawn-(int)dawn)*24.0)),(int)((dawn-(int)dawn)*1440.0+0.5)%60,
-             thr((int)((sunrise-(int)sunrise)*24.0)),(int)((sunrise-(int)sunrise)*1440.0+0.5)%60
+             thr((int)dawn),(int)((dawn-(int)dawn)*60.0+0.5),
+             thr((int)sunrise),(int)((sunrise-(int)sunrise)*60.0+0.5)
             );
     xsprintf(setText,"%d:%02d  %d:%02d",
-             thr((int)((sunset-(int)sunset)*24.0)),(int)((sunset-(int)sunset)*1440.0+0.5)%60,
-             thr((int)((dusk-(int)dusk)*24.0)),(int)((dusk-(int)dusk)*1440.0+0.5)%60
+             thr((int)sunset),(int)((sunset-(int)sunset)*60.0+0.5),
+             thr((int)dusk),(int)((dusk-(int)dusk)*60.0+0.5)
             );
 
     text_layer_set_text(&riseLayer, riseText);

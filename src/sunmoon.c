@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include "pbl-math.h"
 #define trunc(x)  ((int)(x))
 #define rad M_PI/180
@@ -209,7 +208,6 @@ double sin_alt(int iobj,double mjd0,double hour,double lambda,double cphi,double
   {
       double mjd,t,ra,dec,tau;
 
-    double sin_alt_result;
     mjd = mjd0 + hour/24.0;
     t   = (mjd-51544.5)/36525.0;
     if (iobj==1)
@@ -218,21 +216,11 @@ double sin_alt(int iobj,double mjd0,double hour,double lambda,double cphi,double
     tau = 15.0 * (lmst(mjd,lambda) - ra);
     return sphi*sn(dec) + cphi*cs(dec)*cs(tau);
   }
-/*-----------------------------------------------------------------------*/
-/* WHM: write time in hours and minutes                                  */
-/*-----------------------------------------------------------------------*/
-void whm(double ut)
-  {
-      int h,m;
-
-    ut = trunc(ut*60.0+0.5)/60.0;  /* round to 1 min */
-    h=trunc(ut); m=trunc(60.0*(ut-h)+0.5); printf("%d:%d ",h,m);
-  }
 
 void sunmooncalc(int d, int m, int y, int tz, float lat, float lon, float* sunrise, float* sunset, float* dawn, float* dusk, float* moonrise, float* moonset)
 { 
 
-unsigned char above,rise,sett;
+unsigned char rise,sett;
 int day,month,year, iobj,nz;
 double lambda,zone,phi,sphi,cphi;
 double tstart,date,hour,hh,utrise,utset;
@@ -259,8 +247,6 @@ double y_minus,y_0,y_plus,zero1,zero2,xe,ye;
 
         y_minus = sin_alt(iobj,date,hour-1.0,lambda,cphi,sphi)
                     - sinh0[iobj];
-
-        above = (y_minus>0.0); rise = false; sett = false;
 
         /* loop over search intervals from [0h-2h] to [22h-24h]  */
         do {
