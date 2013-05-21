@@ -280,8 +280,8 @@ double y_minus,y_0,y_plus,zero1,zero2,xe,ye;
            hour += 2.0;
 
         } while (!( (hour>=25.0) || (rise==true && sett==true) ));
-        if (rise!=true) utrise=0;
-        if (sett!=true) utset=0;
+        if (rise!=true) utrise=99.0;
+        if (sett!=true) utset=99.0;
         switch (iobj) {
           case 1:
             *moonrise = utrise;
