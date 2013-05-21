@@ -53,6 +53,30 @@ float pbl_atan(float x)
   }
 }
 
+float pbl_atan2(float y, float x)
+{
+  double z;
+  if (x == 0 && y == 0) {
+    return 0; //atan undefined
+  }
+  z = pbl_atan(y/x);
+  if (x > 0)
+    return z;
+  if (y < 0) {
+    if (x < 0 ) {
+      return z - M_PI;
+    } else {
+      return -M_PI/2;
+    }
+  } else {
+    if (x < 0) {
+      return z + M_PI;
+    } else {
+      return M_PI/2;
+    }
+  }
+}
+
 /* not quite rint(), i.e. results not properly rounded to nearest-or-even */
 float pbl_rint (float x)
 {
