@@ -1,5 +1,4 @@
 #include "pbl-math.h"
-#include <stdio.h>
 #define trunc(x)  ((int)(x))
 #define rad M_PI/180
 #define true 1
@@ -36,14 +35,6 @@ double lmst(double mjd,double lambda)
          +(8640184.812866+(0.093104-6.2E-6*t)*t)*t/3600.0;
     lmst_result=24.0*frac((gmst-lambda/15.0) / 24.0);
     return lmst_result;
-}
-
-/*-----------------------------------------------------------------------*/
-/* MJD: Modified Julian Date                                             */
-/*-----------------------------------------------------------------------*/
-long mjd(int d,int m,int y,double h)
-{
-    return (long)(d-32075+1461*(y+4800+(m-14)/12)/4+367*(m-2-(m-14)/12*12)/12-3*((y+4900+(m-14)/12)/100)/4 + h/24.0 - 2400000.5);
 }
 
 /* ABS function*/
@@ -208,14 +199,18 @@ double sin_alt(int iobj,double mjd0,double hour,double lambda,double cphi,double
     return sphi*sn(dec) + cphi*cs(dec)*cs(tau);
 }
 
-void sunmooncalc(int d, int m, int y, int tz, float lat, float lon, float* sunrise, float* sunset, float* dawn, float* dusk, float* moonrise, float* moonset)
+/*
+ * Calculate rise and set time for sun and moon
+ * 0 = moon rise / set
+ * 1 = sun rise / set
+ * 2 = sun dawn / dusk
+ */
+void sunmooncalc(double jd, int tz, float lat, float lon, int iobj, float* utrise, float* utset)
 {
     unsigned char rise,sett;
-    int day,month,year, iobj,nz;
+    int nz;
     double lambda,zone,phi,sphi,cphi;
-    double date,hour,hh;
-    double utrise=0.0;
-    double utset=0.0;
+    double date,hour;
     double y_minus,y_0,y_plus,zero1,zero2,xe,ye;
     double sinh0[] = {
         sn(+8.0/60.0),  /* moonrise          at h= +8'        */
@@ -227,65 +222,49 @@ void sunmooncalc(int d, int m, int y, int tz, float lat, float lon, float* sunri
     phi = lat;
     sphi = sn(phi);
     cphi = cs(phi);
-    date = mjd(d,m,y,0)-zone;
-    for (iobj = 0; iobj <= 2; iobj ++) {
-        hour = 1.0;
-        y_minus = sin_alt(iobj,date,hour-1.0,lambda,cphi,sphi)
-                  - sinh0[iobj];
-        rise = false;
-        sett = false;
-        /* loop over search intervals from [0h-2h] to [22h-24h]  */
-        do {
-            y_0    = sin_alt(iobj,date,hour,lambda,cphi,sphi)
-                     -  sinh0[iobj];
-            y_plus = sin_alt(iobj,date,hour+1.0,lambda,cphi,sphi)
-                     -  sinh0[iobj];
-            /* find parabola through three values Y_MINUS,Y_0,Y_PLUS */
-            quad(y_minus,y_0,y_plus, &xe,&ye, &zero1,&zero2, &nz);
-            switch (nz) {
-                case 0:
-                    ;
-                    break;
-                case 1:
-                    if (y_minus<0.0) {
-                        utrise=hour+zero1;
-                        rise=true;
-                    } else {
-                        utset =hour+zero1;
-                        sett=true;
-                    }
-                    break;
-                case 2: {
-                        if (ye<0.0) {
-                            utrise=hour+zero2;
-                            utset=hour+zero1;
-                        } else {
-                            utrise=hour+zero1;
-                            utset=hour+zero2;
-                        }
-                        rise=true;
-                        sett=true;
-                    }
-                    break;
+    date = (long)(jd-2400000.5)-zone;
+    hour = 1.0;
+    y_minus = sin_alt(iobj,date,hour-1.0,lambda,cphi,sphi)
+              - sinh0[iobj];
+    rise = false;
+    sett = false;
+    /* loop over search intervals from [0h-2h] to [22h-24h]  */
+    do {
+        y_0    = sin_alt(iobj,date,hour,lambda,cphi,sphi)
+                 -  sinh0[iobj];
+        y_plus = sin_alt(iobj,date,hour+1.0,lambda,cphi,sphi)
+                 -  sinh0[iobj];
+        /* find parabola through three values Y_MINUS,Y_0,Y_PLUS */
+        quad(y_minus,y_0,y_plus, &xe,&ye, &zero1,&zero2, &nz);
+        switch (nz) {
+        case 0:
+            ;
+            break;
+        case 1:
+            if (y_minus<0.0) {
+                *utrise=hour+zero1;
+                rise=true;
+            } else {
+                *utset =hour+zero1;
+                sett=true;
             }
-            y_minus = y_plus;      /* prepare for next interval */
-            hour += 2.0;
-        } while (!((hour>=25.0) || (rise==true && sett==true)));
-        if (rise!=true) utrise=99.0;
-        if (sett!=true) utset=99.0;
-        switch (iobj) {
-            case 0:
-                *moonrise = utrise;
-                *moonset = utset;
-                break;
-            case 1:
-                *sunrise = utrise;
-                *sunset = utset;
-                break;
-            case 2:
-                *dawn = utrise;
-                *dusk = utset;
-                break;
+            break;
+        case 2: {
+            if (ye<0.0) {
+                *utrise=hour+zero2;
+                *utset=hour+zero1;
+            } else {
+                *utrise=hour+zero1;
+                *utset=hour+zero2;
+            }
+            rise=true;
+            sett=true;
         }
-    }
+        break;
+        }
+        y_minus = y_plus;      /* prepare for next interval */
+        hour += 2.0;
+    } while (!((hour>=25.0) || (rise==true && sett==true)));
+    if (rise!=true) *utrise=99.0;
+    if (sett!=true) *utset=99.0;
 }

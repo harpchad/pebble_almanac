@@ -92,7 +92,7 @@ void handle_day(AppContextRef ctx, PebbleTickEvent* t)
     char riseTemp[] = "00:00";
     char setTemp[] = "00:00";
     int moonphase_number = 0;
-    float sunrise, sunset, dawn, dusk, moonrise, moonset;
+    float sunrise, sunset, dawn, dusk, moonrise[3], moonset[3];
     PblTm* time = t->tick_time;
     if (!t)
         get_time(time);
@@ -119,16 +119,22 @@ void handle_day(AppContextRef ctx, PebbleTickEvent* t)
     text_layer_set_text(&moonLayer, moon);
 
     //sun rise set
-    sunmooncalc(time->tm_mday,time->tm_mon+1,time->tm_year+1900, TZ, LAT, -LON, &sunrise, &sunset, &dawn, &dusk, &moonrise, &moonset);
-    //if (isDST(time->tm_mday,time->tm_mon,time->tm_wday))
-    //  ++time->tm_hour;
+    sunmooncalc(tm2jd(time), TZ, LAT, -LON, 1, &sunrise, &sunset);
+    sunmooncalc(tm2jd(time), TZ, LAT, -LON, 2, &dawn, &dusk);
 
     (dawn == 99.0) ? mini_snprintf(riseTemp,sizeof(riseTemp),"--:--") : mini_snprintf(riseTemp,sizeof(riseTemp),"%d:%02d",thr((int)dawn),(int)((dawn-(int)dawn)*60.0+0.5));
     (sunrise == 99.0) ?  mini_snprintf(riseText,sizeof(riseText),"%s  --:--",riseTemp) : mini_snprintf(riseText,sizeof(riseText),"%s  %d:%02d",riseTemp,thr((int)sunrise),(int)((sunrise-(int)sunrise)*60.0+0.5));
     (sunset == 99.0) ? mini_snprintf(setTemp,sizeof(setTemp),"--:--") : mini_snprintf(setTemp,sizeof(setTemp),"%d:%02d",thr((int)sunset),(int)((sunset-(int)sunset)*60.0+0.5));
     (dusk == 99.0) ? mini_snprintf(setText,sizeof(setText),"%s  --:--",setTemp) : mini_snprintf(setText,sizeof(setText),"%s  %d:%02d",setTemp,thr((int)dusk),(int)((dusk-(int)dusk)*60.0+0.5));
-    (moonrise==99.0) ? mini_snprintf(moonriseText,sizeof(moonriseText),"--:--") : mini_snprintf(moonriseText,sizeof(moonriseText),"%d:%02d",(int)moonrise,(int)((moonrise-(int)moonrise)*60.0+0.5));
-    (moonset==99.0) ?  mini_snprintf(moonsetText,sizeof(moonsetText),"--:--") : mini_snprintf(moonsetText,sizeof(moonsetText),"%d:%02d",(int)moonset,(int)((moonset-(int)moonset)*60.0+0.5));
+
+    //moon times
+    sunmooncalc(tm2jd(time)-1, TZ, LAT, -LON, 0, &moonrise[0], &moonset[0]); // yesterday
+    sunmooncalc(tm2jd(time), TZ, LAT, -LON, 0, &moonrise[1], &moonset[1]); // today
+    sunmooncalc(tm2jd(time)+1, TZ, LAT, -LON, 0, &moonrise[2], &moonset[2]); // tomorrow
+
+
+    (moonrise[1]==99.0) ? mini_snprintf(moonriseText,sizeof(moonriseText),"--:--") : mini_snprintf(moonriseText,sizeof(moonriseText),"%d:%02d",(int)moonrise[1],(int)((moonrise[1]-(int)moonrise[1])*60.0+0.5));
+    (moonset[1]==99.0) ?  mini_snprintf(moonsetText,sizeof(moonsetText),"--:--") : mini_snprintf(moonsetText,sizeof(moonsetText),"%d:%02d",(int)moonset[1],(int)((moonset[1]-(int)moonset[1])*60.0+0.5));
     text_layer_set_text(&riseLayer, riseText);
     text_layer_set_text(&setLayer, setText);
     text_layer_set_text(&moonSet, moonsetText);
