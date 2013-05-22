@@ -59,7 +59,7 @@ int thr(int hr)
 }
 
 //return julian day number for time
-int tm2jd(PblTm *time)
+int tm2jd(PblTm* time)
 {
     int y,m;
     y = time->tm_year + 1900;
@@ -77,7 +77,8 @@ int moon_phase(int jdn)
 }                              /* 0 = new, 14 = full */
 
 // Called once per day
-void handle_day(AppContextRef ctx, PebbleTickEvent *t) {
+void handle_day(AppContextRef ctx, PebbleTickEvent* t)
+{
 
     (void)t;
     (void)ctx;
@@ -92,8 +93,8 @@ void handle_day(AppContextRef ctx, PebbleTickEvent *t) {
     char setTemp[] = "00:00";
     int moonphase_number = 0;
     float sunrise, sunset, dawn, dusk, moonrise, moonset;
-    PblTm *time = t->tick_time;
-    if(!t)
+    PblTm* time = t->tick_time;
+    if (!t)
         get_time(time);
 
     // date
@@ -106,8 +107,7 @@ void handle_day(AppContextRef ctx, PebbleTickEvent *t) {
     if ((moonphase_number > 0) && (LAT < 0))
         moonphase_number = 28 - moonphase_number;
     // select correct font char
-    if (moonphase_number == 14)
-    {
+    if (moonphase_number == 14) {
         moon[0] = (unsigned char)(48);
     } else if (moonphase_number == 0) {
         moon[0] = (unsigned char)(49);
@@ -136,13 +136,14 @@ void handle_day(AppContextRef ctx, PebbleTickEvent *t) {
 }
 
 // Called once per minute
-void handle_minute_tick(AppContextRef ctx, PebbleTickEvent *t) {
+void handle_minute_tick(AppContextRef ctx, PebbleTickEvent* t)
+{
 
     (void)t;
     (void)ctx;
 
     static char timeText[] = "00:00"; // Needs to be static because it's used by the system later.
-    char *time_format;
+    char* time_format;
 
     if (clock_is_24h_style()) {
         time_format = "%R";
@@ -170,7 +171,8 @@ void handle_minute_tick(AppContextRef ctx, PebbleTickEvent *t) {
     }
 }
 
-void handle_init(AppContextRef ctx) {
+void handle_init(AppContextRef ctx)
+{
     (void)ctx;
 
     window_init(&window, "Almanac");
@@ -234,13 +236,15 @@ void handle_init(AppContextRef ctx) {
     layer_add_child(&window.layer, &moonSet.layer);
 }
 
-void handle_deinit(AppContextRef ctx) {
+void handle_deinit(AppContextRef ctx)
+{
     (void)ctx;
     fonts_unload_custom_font(font_moon);
     fonts_unload_custom_font(font_roboto);
 }
 
-void pbl_main(void *params) {
+void pbl_main(void* params)
+{
     PebbleAppHandlers handlers = {
         .init_handler = &handle_init,
         .deinit_handler = &handle_deinit,
