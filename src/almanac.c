@@ -1,7 +1,7 @@
 #include "pebble_os.h"
 #include "pebble_app.h"
 #include "pebble_fonts.h"
-#include "xprintf.h"
+#include "mini-printf.h"
 #include "pbl-math.h"
 #include "sunmoon.h"
 #include "config.h"
@@ -30,6 +30,7 @@ GFont font_moon;
 
 //is it daylight time?
 //need a better way
+/*
 bool isDST(int day, int month, int dow)
 {
     //January, february, and december are out.
@@ -49,6 +50,7 @@ bool isDST(int day, int month, int dow)
     //That means the previous sunday must be before the 1st.
     return previousSunday <= 0;
 }
+*/
 
 //If 12 hour time, subtract 12 from hr if hr > 12
 int thr(int hr)
@@ -86,6 +88,8 @@ void handle_day(AppContextRef ctx, PebbleTickEvent *t) {
     static char moonsetText[] = "00:00";
     static char date[] = "00/00/0000";
     static char moon[] = "m";
+    char riseTemp[] = "00:00";
+    char setTemp[] = "00:00";
     int moonphase_number = 0;
     float sunrise, sunset, dawn, dusk, moonrise, moonset;
     PblTm *time = t->tick_time;
@@ -119,52 +123,12 @@ void handle_day(AppContextRef ctx, PebbleTickEvent *t) {
     //if (isDST(time->tm_mday,time->tm_mon,time->tm_wday))
     //  ++time->tm_hour;
 
-    if (dawn == 99.0 || sunrise == 99.0) {
-      if (dawn == 99.0) {
-            xsprintf(riseText,"--:--  %d:%02d",
-             thr((int)sunrise),(int)((sunrise-(int)sunrise)*60.0+0.5)
-            );
-      } else if (sunrise == 99.0) {
-            xsprintf(riseText,"%d:%02d  --:--",
-             thr((int)dawn),(int)((dawn-(int)dawn)*60.0+0.5)
-            );
-      } else {
-            xsprintf(riseText,"--:--  --:--");
-      }
-    } else {
-            xsprintf(riseText,"%d:%02d  %d:%02d",
-             thr((int)dawn),(int)((dawn-(int)dawn)*60.0+0.5),
-             thr((int)sunrise),(int)((sunrise-(int)sunrise)*60.0+0.5)
-            );
-    }
-    if (sunset == 99.0 || dusk == 99.0) {
-      if (sunset == 99.0) {
-            xsprintf(setText,"--:--  %d:%02d",
-             thr((int)dusk),(int)((dusk-(int)dusk)*60.0+0.5)
-            );
-      } else if (dusk == 99.0) {
-            xsprintf(setText,"%d:%02d  --:--",
-             thr((int)sunset),(int)((sunset-(int)sunset)*60.0+0.5)
-            );
-      } else {
-            xsprintf(setText,"--:--  --:--");
-      }
-    } else {
-            xsprintf(setText,"%d:%02d  %d:%02d",
-             thr((int)sunset),(int)((sunset-(int)sunset)*60.0+0.5),
-             thr((int)dusk),(int)((dusk-(int)dusk)*60.0+0.5)
-            );
-    }
-    if (moonrise==99.0) {
-      xsprintf(moonriseText,"--:--");
-    } else {
-      xsprintf(moonriseText,"%d:%02d",(int)moonrise,(int)((moonrise-(int)moonrise)*60.0+0.5));
-    }
-    if (moonset==99.0) {
-      xsprintf(moonsetText,"--:--");
-    } else {
-      xsprintf(moonsetText,"%d:%02d",(int)moonset,(int)((moonset-(int)moonset)*60.0+0.5));
-    }
+    (dawn == 99.0) ? mini_snprintf(riseTemp,sizeof(riseTemp),"--:--") : mini_snprintf(riseTemp,sizeof(riseTemp),"%d:%02d",thr((int)dawn),(int)((dawn-(int)dawn)*60.0+0.5));
+    (sunrise == 99.0) ?  mini_snprintf(riseText,sizeof(riseText),"%s  --:--",riseTemp) : mini_snprintf(riseText,sizeof(riseText),"%s  %d:%02d",riseTemp,thr((int)sunrise),(int)((sunrise-(int)sunrise)*60.0+0.5));
+    (sunset == 99.0) ? mini_snprintf(setTemp,sizeof(setTemp),"--:--") : mini_snprintf(setTemp,sizeof(setTemp),"%d:%02d",thr((int)sunset),(int)((sunset-(int)sunset)*60.0+0.5));
+    (dusk == 99.0) ? mini_snprintf(setText,sizeof(setText),"%s  --:--",setTemp) : mini_snprintf(setText,sizeof(setText),"%s  %d:%02d",setTemp,thr((int)dusk),(int)((dusk-(int)dusk)*60.0+0.5));
+    (moonrise==99.0) ? mini_snprintf(moonriseText,sizeof(moonriseText),"--:--") : mini_snprintf(moonriseText,sizeof(moonriseText),"%d:%02d",(int)moonrise,(int)((moonrise-(int)moonrise)*60.0+0.5));
+    (moonset==99.0) ?  mini_snprintf(moonsetText,sizeof(moonsetText),"--:--") : mini_snprintf(moonsetText,sizeof(moonsetText),"%d:%02d",(int)moonset,(int)((moonset-(int)moonset)*60.0+0.5));
     text_layer_set_text(&riseLayer, riseText);
     text_layer_set_text(&setLayer, setText);
     text_layer_set_text(&moonSet, moonsetText);
@@ -247,13 +211,13 @@ void handle_init(AppContextRef ctx) {
     text_layer_set_font(&moonLayer, font_moon);
     text_layer_set_text_alignment(&moonLayer, GTextAlignmentCenter);
 
-    text_layer_init(&moonRise, GRect(0, 120, 62, 168-120 /* height */));
+    text_layer_init(&moonRise, GRect(0, 118, 62, 168-118 /* height */));
     text_layer_set_text_color(&moonRise, GColorWhite);
     text_layer_set_background_color(&moonRise, GColorClear);
     text_layer_set_font(&moonRise, fonts_get_system_font(FONT_KEY_GOTHIC_18));
     text_layer_set_text_alignment(&moonRise, GTextAlignmentRight);
 
-    text_layer_init(&moonSet, GRect(82, 120, 144-82, 168-120 /* height */));
+    text_layer_init(&moonSet, GRect(94, 118, 144-94, 168-118 /* height */));
     text_layer_set_text_color(&moonSet, GColorWhite);
     text_layer_set_background_color(&moonSet, GColorClear);
     text_layer_set_font(&moonSet, fonts_get_system_font(FONT_KEY_GOTHIC_18));

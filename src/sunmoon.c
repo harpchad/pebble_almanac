@@ -1,4 +1,5 @@
 #include "pbl-math.h"
+#include <stdio.h>
 #define trunc(x)  ((int)(x))
 #define rad M_PI/180
 #define true 1
@@ -33,50 +34,12 @@ double lmst(double mjd,double lambda)
     return lmst_result;
   }
 
-/*----------------------------------------------------------------------*/
-/* CALDAT: Finds the civil calendar date for a given value              */
-/*         of the Modified Julian Date (MJD).                           */
-/*         Julian calendar is used up to 1582 October 4,                */
-/*         Gregorian calendar is used from 1582 October 15 onwards.     */
-/*----------------------------------------------------------------------*/
-void caldat(double mjd, int* day,int* month,int* year,double* hour)
-  {
-      int b,d,f;
-      double jd,jd0,c,e;
-
-    jd  = mjd + 2400000.5;
-    jd0 = trunc(jd+0.5);
-    if (jd0<2299161.0)                            /* calendar:    */
-           { c=jd0+1524.0; }                      /* -> Julian    */
-      else {                                      /* -> Gregorian */
-             b=trunc((jd0-1867216.25)/36524.25);
-             c=jd0+(b-trunc((double)(b)/4))+1525.0;
-           }
-    d    = trunc((c-122.1)/365.25);          e     = 365.0*d+trunc((double)(d)/4);
-    f    = trunc((c-e)/30.6001);
-    *day  = trunc(c-e+0.5)-trunc(30.6001*f);  *month = f-1-12*trunc((double)(f)/14);
-    *year = d-4715-trunc((double)((7+*month))/10);       *hour  = 24.0*(jd+0.5-jd0);
-  }
-
 /*-----------------------------------------------------------------------*/
 /* MJD: Modified Julian Date                                             */
-/*      The routine is valid for any date since 4713 BC.                 */
-/*      Julian calendar is used up to 1582 October 4,                    */
-/*      Gregorian calendar is used from 1582 October 15 onwards.         */
 /*-----------------------------------------------------------------------*/
-double mjd(int day,int month,int year,double hour)
+long mjd(int d,int m,int y,double h)
   {
-      double a; int b;
-
-    double mjd_result;
-    a=10000.0*year+100.0*month+day;
-    if (month<=2)  { month=month+12; year=year-1; }
-    if (a<=15821004.1)
-           b=-2+trunc((double)((year+4716))/4)-1179;
-      else b=trunc((double)(year)/400)-trunc((double)(year)/100)+trunc((double)(year)/4);
-    a=365.0*year-679004.0;
-    mjd_result=a+b+trunc(30.6001*(month+1))+day+hour/24.0;
-    return mjd_result;
+    return (long)(d-32075+1461*(y+4800+(m-14)/12)/4+367*(m-2-(m-14)/12*12)/12-3*((y+4900+(m-14)/12)/100)/4 + h/24.0 - 2400000.5);
   }
 
 /* ABS function*/
@@ -240,7 +203,6 @@ double y_minus,y_0,y_plus,zero1,zero2,xe,ye;
 
 
     date = tstart;
-    caldat(date+zone,&day,&month,&year,&hh);
 
     for( iobj = 0; iobj <= 2; iobj ++)
 
