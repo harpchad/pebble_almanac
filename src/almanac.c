@@ -151,7 +151,7 @@ void handle_day(AppContextRef ctx, PebbleTickEvent* t)
         mini_snprintf(moon2Text,sizeof(moon2Text),"%02d:%02d>\n%02d:%02d>",hours(moonrise[2]),mins(moonrise[2]),hours(moonset[2]),mins(moonset[2]));
     } else if (moonset[1] == 99.0) { // moon didn't set today
         mini_snprintf(moon1Text,sizeof(moon1Text),"%02d:%02d\n%02d:%02d>",hours(moonrise[1]),mins(moonrise[1]),hours(moonset[2]),mins(moonset[2]));
-        mini_snprintf(moon2Text,sizeof(moon2Text),"%02d:%02d>\n--:-->",hours(moonrise[2]),mins(moonrise[2]));
+        mini_snprintf(moon2Text,sizeof(moon2Text),"%02d:%02d>\n--:--",hours(moonrise[2]),mins(moonrise[2]));
     } else if (moonrise[1] > moonset[1]) { // moon rose before midnight, rises again today
         mini_snprintf(moon1Text,sizeof(moon1Text),"<%02d:%02d\n%02d:%02d",hours(moonrise[0]),mins(moonrise[0]),hours(moonset[1]),mins(moonset[1]));
         mini_snprintf(moon2Text,sizeof(moon2Text),"%02d:%02d\n%02d:%02d>",hours(moonrise[1]),mins(moonrise[1]),hours(moonset[2]),mins(moonset[2]));
