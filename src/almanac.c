@@ -21,8 +21,8 @@ TextLayer dateLayer; // The date
 TextLayer riseLayer; // sunrise
 TextLayer setLayer; // sunset
 TextLayer moonLayer; // moon phase
-TextLayer moonRise; // moonrise
-TextLayer moonSet; // moonset
+TextLayer moonLeft; // moonrise
+TextLayer moonRight; // moonset
 
 //Make fonts global so we can deinit later
 GFont font_roboto;
@@ -76,6 +76,17 @@ int moon_phase(int jdn)
     return (int)(jd*27 + 0.5); /* scale fraction from 0-27 and round by adding 0.5 */
 }                              /* 0 = new, 14 = full */
 
+/*Convert decimal hours, into hours and minutes with rounding*/
+int hours(float time)
+{
+    return (int)(time+1/1440*0.5);
+}
+
+int mins(float time)
+{
+    return (int)((time-(int)time)*60.0+0.5);
+}
+
 // Called once per day
 void handle_day(AppContextRef ctx, PebbleTickEvent* t)
 {
@@ -85,8 +96,8 @@ void handle_day(AppContextRef ctx, PebbleTickEvent* t)
 
     static char riseText[] = "00:00  00:00";
     static char setText[] = "00:00  00:00";
-    static char moonriseText[] = "00:00";
-    static char moonsetText[] = "00:00";
+    static char moon1Text[] = "<00:00\n<00:00";
+    static char moon2Text[] = "00:00>\n00:00>";
     static char date[] = "00/00/0000";
     static char moon[] = "m";
     char riseTemp[] = "00:00";
@@ -122,23 +133,35 @@ void handle_day(AppContextRef ctx, PebbleTickEvent* t)
     sunmooncalc(tm2jd(time), TZ, LAT, -LON, 1, &sunrise, &sunset);
     sunmooncalc(tm2jd(time), TZ, LAT, -LON, 2, &dawn, &dusk);
 
-    (dawn == 99.0) ? mini_snprintf(riseTemp,sizeof(riseTemp),"--:--") : mini_snprintf(riseTemp,sizeof(riseTemp),"%d:%02d",thr((int)dawn),(int)((dawn-(int)dawn)*60.0+0.5));
-    (sunrise == 99.0) ?  mini_snprintf(riseText,sizeof(riseText),"%s  --:--",riseTemp) : mini_snprintf(riseText,sizeof(riseText),"%s  %d:%02d",riseTemp,thr((int)sunrise),(int)((sunrise-(int)sunrise)*60.0+0.5));
-    (sunset == 99.0) ? mini_snprintf(setTemp,sizeof(setTemp),"--:--") : mini_snprintf(setTemp,sizeof(setTemp),"%d:%02d",thr((int)sunset),(int)((sunset-(int)sunset)*60.0+0.5));
-    (dusk == 99.0) ? mini_snprintf(setText,sizeof(setText),"%s  --:--",setTemp) : mini_snprintf(setText,sizeof(setText),"%s  %d:%02d",setTemp,thr((int)dusk),(int)((dusk-(int)dusk)*60.0+0.5));
+    (dawn == 99.0) ? mini_snprintf(riseTemp,sizeof(riseTemp),"--:--") : mini_snprintf(riseTemp,sizeof(riseTemp),"%d:%02d",thr(hours(dawn)),mins(dawn));
+    (sunrise == 99.0) ?  mini_snprintf(riseText,sizeof(riseText),"%s  --:--",riseTemp) : mini_snprintf(riseText,sizeof(riseText),"%s  %d:%02d",riseTemp,thr(hours(sunrise)),mins(sunrise));
+    (sunset == 99.0) ? mini_snprintf(setTemp,sizeof(setTemp),"--:--") : mini_snprintf(setTemp,sizeof(setTemp),"%d:%02d",thr(hours(sunset)),mins(sunset));
+    (dusk == 99.0) ? mini_snprintf(setText,sizeof(setText),"%s  --:--",setTemp) : mini_snprintf(setText,sizeof(setText),"%s  %d:%02d",setTemp,thr(hours(dusk)),mins(dusk));
+
+    text_layer_set_text(&riseLayer, riseText);
+    text_layer_set_text(&setLayer, setText);
 
     //moon times
     sunmooncalc(tm2jd(time)-1, TZ, LAT, -LON, 0, &moonrise[0], &moonset[0]); // yesterday
     sunmooncalc(tm2jd(time), TZ, LAT, -LON, 0, &moonrise[1], &moonset[1]); // today
     sunmooncalc(tm2jd(time)+1, TZ, LAT, -LON, 0, &moonrise[2], &moonset[2]); // tomorrow
 
+    if (moonrise[1] == 99.0) { // moon didn't rise today
+        mini_snprintf(moon1Text,sizeof(moon1Text),"<%02d:%02d\n%02d:%02d",hours(moonrise[0]),mins(moonrise[0]),hours(moonset[1]),mins(moonset[1]));
+        mini_snprintf(moon2Text,sizeof(moon2Text),"%02d:%02d>\n%02d:%02d>",hours(moonrise[2]),mins(moonrise[2]),hours(moonset[2]),mins(moonset[2]));
+    } else if (moonset[1] == 99.0) { // moon didn't set today
+        mini_snprintf(moon1Text,sizeof(moon1Text),"%02d:%02d\n%02d:%02d>",hours(moonrise[1]),mins(moonrise[1]),hours(moonset[2]),mins(moonset[2]));
+        mini_snprintf(moon2Text,sizeof(moon2Text),"%02d:%02d>\n--:-->",hours(moonrise[2]),mins(moonrise[2]));
+    } else if (moonrise[1] > moonset[1]) { // moon rose before midnight, rises again today
+        mini_snprintf(moon1Text,sizeof(moon1Text),"<%02d:%02d\n%02d:%02d",hours(moonrise[0]),mins(moonrise[0]),hours(moonset[1]),mins(moonset[1]));
+        mini_snprintf(moon2Text,sizeof(moon2Text),"%02d:%02d\n%02d:%02d>",hours(moonrise[1]),mins(moonrise[1]),hours(moonset[2]),mins(moonset[2]));
+    } else { // moon was down at midnight, rose today
+        mini_snprintf(moon1Text,sizeof(moon1Text),"%02d:%02d\n%02d:%02d",hours(moonrise[1]),mins(moonrise[1]),hours(moonset[1]),mins(moonset[1]));
+        mini_snprintf(moon2Text,sizeof(moon2Text),"%02d:%02d>\n%02d:%02d>",hours(moonrise[2]),mins(moonrise[2]),hours(moonset[2]),mins(moonset[2]));
+   }
 
-    (moonrise[1]==99.0) ? mini_snprintf(moonriseText,sizeof(moonriseText),"--:--") : mini_snprintf(moonriseText,sizeof(moonriseText),"%d:%02d",(int)moonrise[1],(int)((moonrise[1]-(int)moonrise[1])*60.0+0.5));
-    (moonset[1]==99.0) ?  mini_snprintf(moonsetText,sizeof(moonsetText),"--:--") : mini_snprintf(moonsetText,sizeof(moonsetText),"%d:%02d",(int)moonset[1],(int)((moonset[1]-(int)moonset[1])*60.0+0.5));
-    text_layer_set_text(&riseLayer, riseText);
-    text_layer_set_text(&setLayer, setText);
-    text_layer_set_text(&moonSet, moonsetText);
-    text_layer_set_text(&moonRise, moonriseText);
+    text_layer_set_text(&moonLeft, moon1Text);
+    text_layer_set_text(&moonRight, moon2Text);
 }
 
 // Called once per minute
@@ -189,7 +212,7 @@ void handle_init(AppContextRef ctx)
     font_moon = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_MOON_PHASES_SUBSET_30));
     font_roboto = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_ROBOTO_BOLD_SUBSET_49));
 
-    text_layer_init(&timeLayer, GRect(0, 55, 144 /* width */, 168-60 /* height */));
+    text_layer_init(&timeLayer, GRect(0, 40, 144 /* width */, 168-40 /* height */));
     text_layer_set_text_color(&timeLayer, GColorWhite);
     text_layer_set_background_color(&timeLayer, GColorClear);
     text_layer_set_font(&timeLayer, font_roboto);
@@ -213,23 +236,23 @@ void handle_init(AppContextRef ctx)
     text_layer_set_font(&setLayer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
     text_layer_set_text_alignment(&setLayer, GTextAlignmentRight);
 
-    text_layer_init(&moonLayer, GRect(0, 115, 144 /* width */, 168-115 /* height */));
+    text_layer_init(&moonLayer, GRect(0, 108, 144 /* width */, 168-108 /* height */));
     text_layer_set_text_color(&moonLayer, GColorWhite);
     text_layer_set_background_color(&moonLayer, GColorClear);
     text_layer_set_font(&moonLayer, font_moon);
     text_layer_set_text_alignment(&moonLayer, GTextAlignmentCenter);
 
-    text_layer_init(&moonRise, GRect(0, 118, 50, 168-118 /* height */));
-    text_layer_set_text_color(&moonRise, GColorWhite);
-    text_layer_set_background_color(&moonRise, GColorClear);
-    text_layer_set_font(&moonRise, fonts_get_system_font(FONT_KEY_GOTHIC_18));
-    text_layer_set_text_alignment(&moonRise, GTextAlignmentRight);
+    text_layer_init(&moonLeft, GRect(0, 102, 50, 168-102 /* height */));
+    text_layer_set_text_color(&moonLeft, GColorWhite);
+    text_layer_set_background_color(&moonLeft, GColorClear);
+    text_layer_set_font(&moonLeft, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+    text_layer_set_text_alignment(&moonLeft, GTextAlignmentRight);
 
-    text_layer_init(&moonSet, GRect(94, 118, 144-94, 168-118 /* height */));
-    text_layer_set_text_color(&moonSet, GColorWhite);
-    text_layer_set_background_color(&moonSet, GColorClear);
-    text_layer_set_font(&moonSet, fonts_get_system_font(FONT_KEY_GOTHIC_18));
-    text_layer_set_text_alignment(&moonSet, GTextAlignmentLeft);
+    text_layer_init(&moonRight, GRect(94, 102, 144-94, 168-102 /* height */));
+    text_layer_set_text_color(&moonRight, GColorWhite);
+    text_layer_set_background_color(&moonRight, GColorClear);
+    text_layer_set_font(&moonRight, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+    text_layer_set_text_alignment(&moonRight, GTextAlignmentLeft);
 
     handle_day(ctx, NULL);
     handle_minute_tick(ctx, NULL);
@@ -238,8 +261,8 @@ void handle_init(AppContextRef ctx)
     layer_add_child(&window.layer, &riseLayer.layer);
     layer_add_child(&window.layer, &setLayer.layer);
     layer_add_child(&window.layer, &moonLayer.layer);
-    layer_add_child(&window.layer, &moonRise.layer);
-    layer_add_child(&window.layer, &moonSet.layer);
+    layer_add_child(&window.layer, &moonLeft.layer);
+    layer_add_child(&window.layer, &moonRight.layer);
 }
 
 void handle_deinit(AppContextRef ctx)
