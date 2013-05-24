@@ -53,12 +53,6 @@ bool isDST(int day, int month, int dow)
 }
 */
 
-//If 12 hour time, subtract 12 from hr if hr > 12
-int thr(int hr)
-{
-    return !clock_is_24h_style() && (hr > 12) ? hr - 12 : hr;
-}
-
 //return julian day number for time
 int tm2jd(PblTm* time)
 {
@@ -89,6 +83,51 @@ int mins(float time)
 	return (m==60)?0:m;
 }
 
+//If 12 hour time, subtract 12 from hr if hr > 12
+char* thr(float time, char ap)
+{
+    static char fmttime[] = "00:00A";
+    int h = hours(time);
+    int m = mins(time);
+    if (clock_is_24h_style()) {
+        mini_snprintf(fmttime, sizeof(fmttime), "%d:%02d",h,m);
+    } else {
+        if (h > 12) {
+            h -= 12;
+            mini_snprintf(fmttime, sizeof(fmttime), (ap==1)?"%d:%02dP":"%d:%02d",h,m);
+        } else {
+            mini_snprintf(fmttime, sizeof(fmttime), (ap==1)?"%d:%02dA":"%d:%02d",h,m);
+        }
+    }
+    return fmttime;
+}
+char* mthr(float time1, float time2, char* inject)
+{
+    static char fmttime[] = "00:00A> 00:00A";
+    int h1 = hours(time1);
+    int m1 = mins(time1);
+    int h2 = hours(time2);
+    int m2 = mins(time2);
+    if (clock_is_24h_style()) {
+        mini_snprintf(fmttime, sizeof(fmttime), "%d:%02d%s %d:%02d",h1,m1,inject,h2,m2);
+    } else {
+        if (h1 > 12 && h2 > 12) {
+            h1 -= 12;
+            h2 -= 12;
+            mini_snprintf(fmttime, sizeof(fmttime), "%d:%02dP%s %d:%02dP",h1,m1,inject,h2,m2);
+        } else if (h1 > 12) {
+            h1 -= 12;
+            mini_snprintf(fmttime, sizeof(fmttime), "%d:%02dP%s %d:%02dA",h1,m1,inject,h2,m2);
+        } else if (h2 > 12) {
+            h2 -= 12;
+            mini_snprintf(fmttime, sizeof(fmttime), "%d:%02dA%s %d:%02dP",h1,m1,inject,h2,m2);
+        } else {
+            mini_snprintf(fmttime, sizeof(fmttime), "%d:%02dA%s %d:%02dA",h1,m1,inject,h2,m2);
+        }
+    }
+    return fmttime;
+}
+
 // Called once per day
 void handle_day(AppContextRef ctx, PebbleTickEvent* t)
 {
@@ -96,15 +135,15 @@ void handle_day(AppContextRef ctx, PebbleTickEvent* t)
     (void)t;
     (void)ctx;
 
-    static char riseText[] = "00:00  00:00";
-    static char setText[] = "00:00  00:00";
-    static char moon1Text[] = "<00:00\n<00:00";
-    static char moon2Text[] = "00:00>\n00:00>";
+    static char riseText[] = "00:00a 00:00a";
+    static char setText[] = "00:00a 00:00a";
+    static char moon1Text[] = "<00:00a\n<00:00a";
+    static char moon2Text[] = "00:00a>\n00:00a>";
     static char date[] = "00/00/0000";
     static char moon[] = "m";
     static char moonp[] = "-----";
-    char riseTemp[] = "00:00";
-    char setTemp[] = "00:00";
+    char riseTemp[] = "00:00a";
+    char setTemp[] = "00:00a";
     float moonphase_number = 0.0;
     int moonphase_letter = 0;
     float sunrise, sunset, dawn, dusk, moonrise[3], moonset[3];
@@ -144,10 +183,10 @@ void handle_day(AppContextRef ctx, PebbleTickEvent* t)
     sunmooncalc(tm2jd(time), TZ, LAT, -LON, 1, &sunrise, &sunset);
     sunmooncalc(tm2jd(time), TZ, LAT, -LON, 2, &dawn, &dusk);
 
-    (dawn == 99.0) ? mini_snprintf(riseTemp,sizeof(riseTemp),"--:--") : mini_snprintf(riseTemp,sizeof(riseTemp),"%d:%02d",thr(hours(dawn)),mins(dawn));
-    (sunrise == 99.0) ?  mini_snprintf(riseText,sizeof(riseText),"%s  --:--",riseTemp) : mini_snprintf(riseText,sizeof(riseText),"%s  %d:%02d",riseTemp,thr(hours(sunrise)),mins(sunrise));
-    (sunset == 99.0) ? mini_snprintf(setTemp,sizeof(setTemp),"--:--") : mini_snprintf(setTemp,sizeof(setTemp),"%d:%02d",thr(hours(sunset)),mins(sunset));
-    (dusk == 99.0) ? mini_snprintf(setText,sizeof(setText),"%s  --:--",setTemp) : mini_snprintf(setText,sizeof(setText),"%s  %d:%02d",setTemp,thr(hours(dusk)),mins(dusk));
+    (dawn == 99.0) ? mini_snprintf(riseTemp,sizeof(riseTemp),"--:--") : mini_snprintf(riseTemp,sizeof(riseTemp),"%s",thr(dawn,0));
+    (sunrise == 99.0) ?  mini_snprintf(riseText,sizeof(riseText),"%s --:--",riseTemp) : mini_snprintf(riseText,sizeof(riseText),"%s  %s",riseTemp,thr(sunrise,0));
+    (sunset == 99.0) ? mini_snprintf(setTemp,sizeof(setTemp),"--:--") : mini_snprintf(setTemp,sizeof(setTemp),"%s",thr(sunset,0));
+    (dusk == 99.0) ? mini_snprintf(setText,sizeof(setText),"%s --:--",setTemp) : mini_snprintf(setText,sizeof(setText),"%s  %s",setTemp,thr(dusk,0));
 
     text_layer_set_text(&riseLayer, riseText);
     text_layer_set_text(&setLayer, setText);
@@ -158,17 +197,17 @@ void handle_day(AppContextRef ctx, PebbleTickEvent* t)
     sunmooncalc(tm2jd(time)+1, TZ, LAT, -LON, 0, &moonrise[2], &moonset[2]); // tomorrow
 
     if (moonrise[1] == 99.0) { // moon didn't rise today
-        mini_snprintf(moon1Text,sizeof(moon1Text),"<%02d:%02d\n%02d:%02d",hours(moonrise[0]),mins(moonrise[0]),hours(moonset[1]),mins(moonset[1]));
-        mini_snprintf(moon2Text,sizeof(moon2Text),"%02d:%02d>\n%02d:%02d>",hours(moonrise[2]),mins(moonrise[2]),hours(moonset[2]),mins(moonset[2]));
+        mini_snprintf(moon1Text,sizeof(moon1Text),"<%s",mthr(moonrise[0],moonset[1],"\0"));
+        mini_snprintf(moon2Text,sizeof(moon2Text),"%s>",mthr(moonrise[2],moonset[2],">"));
     } else if (moonset[1] == 99.0) { // moon didn't set today
-        mini_snprintf(moon1Text,sizeof(moon1Text),"%02d:%02d\n%02d:%02d>",hours(moonrise[1]),mins(moonrise[1]),hours(moonset[2]),mins(moonset[2]));
-        mini_snprintf(moon2Text,sizeof(moon2Text),"%02d:%02d>\n--:--",hours(moonrise[2]),mins(moonrise[2]));
+        mini_snprintf(moon1Text,sizeof(moon1Text),"%s>",mthr(moonrise[1],moonset[2],"\0"));
+        mini_snprintf(moon2Text,sizeof(moon2Text),"%s>\n--:--",thr(moonrise[2],1));
     } else if (moonrise[1] > moonset[1]) { // moon rose before midnight, rises again today
-        mini_snprintf(moon1Text,sizeof(moon1Text),"<%02d:%02d\n%02d:%02d",hours(moonrise[0]),mins(moonrise[0]),hours(moonset[1]),mins(moonset[1]));
-        mini_snprintf(moon2Text,sizeof(moon2Text),"%02d:%02d\n%02d:%02d>",hours(moonrise[1]),mins(moonrise[1]),hours(moonset[2]),mins(moonset[2]));
+        mini_snprintf(moon1Text,sizeof(moon1Text),"<%s",mthr(moonrise[0],moonset[1],"\0"));
+        mini_snprintf(moon2Text,sizeof(moon2Text),"%s>",mthr(moonrise[1],moonset[2],"\0"));
     } else { // moon was down at midnight, rose today
-        mini_snprintf(moon1Text,sizeof(moon1Text),"%02d:%02d\n%02d:%02d",hours(moonrise[1]),mins(moonrise[1]),hours(moonset[1]),mins(moonset[1]));
-        mini_snprintf(moon2Text,sizeof(moon2Text),"%02d:%02d>\n%02d:%02d>",hours(moonrise[2]),mins(moonrise[2]),hours(moonset[2]),mins(moonset[2]));
+        mini_snprintf(moon1Text,sizeof(moon1Text),"%s",mthr(moonrise[1],moonset[1],"\0"));
+        mini_snprintf(moon2Text,sizeof(moon2Text),"%s>",mthr(moonrise[2],moonset[2],">"));
    }
 
     text_layer_set_text(&moonLeft, moon1Text);
