@@ -23,6 +23,7 @@ TextLayer setLayer; // sunset
 TextLayer moonLayer; // moon phase
 TextLayer moonLeft; // moonrise
 TextLayer moonRight; // moonset
+TextLayer moonPercent;//
 
 //Make fonts global so we can deinit later
 GFont font_roboto;
@@ -67,24 +68,25 @@ int tm2jd(PblTm* time)
     return time->tm_mday-32075+1461*(y+4800+(m-14)/12)/4+367*(m-2-(m-14)/12*12)/12-3*((y+4900+(m-14)/12)/100)/4;
 }
 
-int moon_phase(int jdn)
+float moon_phase(int jdn)
 {
     double jd;
     jd = jdn-2451550.1;
     jd /= 29.530588853;
     jd -= (int)jd;
-    return (int)(jd*27 + 0.5); /* scale fraction from 0-27 and round by adding 0.5 */
-}                              /* 0 = new, 14 = full */
+    return jd;
+}
 
 /*Convert decimal hours, into hours and minutes with rounding*/
 int hours(float time)
 {
-    return (int)(time+1/1440*0.5);
+    return (int)(time+1/60.0*0.5);
 }
 
 int mins(float time)
 {
-    return (int)((time-(int)time)*60.0+0.5);
+    int m = (int)((time-(int)time)*60.0+0.5);
+	return (m==60)?0:m;
 }
 
 // Called once per day
@@ -100,9 +102,11 @@ void handle_day(AppContextRef ctx, PebbleTickEvent* t)
     static char moon2Text[] = "00:00>\n00:00>";
     static char date[] = "00/00/0000";
     static char moon[] = "m";
+    static char moonp[] = "-----";
     char riseTemp[] = "00:00";
     char setTemp[] = "00:00";
-    int moonphase_number = 0;
+    float moonphase_number = 0.0;
+    int moonphase_letter = 0;
     float sunrise, sunset, dawn, dusk, moonrise[3], moonset[3];
     PblTm* time = t->tick_time;
     if (!t)
@@ -112,22 +116,29 @@ void handle_day(AppContextRef ctx, PebbleTickEvent* t)
     string_format_time(date, sizeof(date), DATEFMT, time);
     text_layer_set_text(&dateLayer, date);
 
-    // moon
+
     moonphase_number = moon_phase(tm2jd(time));
+    moonphase_letter = (int)(moonphase_number*27 + 0.5);
     // correct for southern hemisphere
-    if ((moonphase_number > 0) && (LAT < 0))
-        moonphase_number = 28 - moonphase_number;
+    if ((moonphase_letter > 0) && (LAT < 0))
+        moonphase_letter = 28 - moonphase_letter;
     // select correct font char
-    if (moonphase_number == 14) {
+    if (moonphase_letter == 14) {
         moon[0] = (unsigned char)(48);
-    } else if (moonphase_number == 0) {
+    } else if (moonphase_letter == 0) {
         moon[0] = (unsigned char)(49);
-    } else if (moonphase_number < 14) {
-        moon[0] = (unsigned char)(moonphase_number+96);
+    } else if (moonphase_letter < 14) {
+        moon[0] = (unsigned char)(moonphase_letter+96);
     } else {
-        moon[0] = (unsigned char)(moonphase_number+95);
+        moon[0] = (unsigned char)(moonphase_letter+95);
     }
     text_layer_set_text(&moonLayer, moon);
+    if (moonphase_number >= 0.5) {
+        mini_snprintf(moonp,sizeof(moonp)," %d-",(int)((1-(1+pbl_cos(moonphase_number*M_PI*2))/2)*100));
+    } else {
+        mini_snprintf(moonp,sizeof(moonp)," %d+",(int)((1-(1+pbl_cos(moonphase_number*M_PI*2))/2)*100));
+    }
+    text_layer_set_text(&moonPercent, moonp);
 
     //sun rise set
     sunmooncalc(tm2jd(time), TZ, LAT, -LON, 1, &sunrise, &sunset);
@@ -242,6 +253,12 @@ void handle_init(AppContextRef ctx)
     text_layer_set_font(&moonLayer, font_moon);
     text_layer_set_text_alignment(&moonLayer, GTextAlignmentCenter);
 
+    text_layer_init(&moonPercent, GRect(0, 135, 144 /* width */, 168-135 /* height */));
+    text_layer_set_text_color(&moonPercent, GColorWhite);
+    text_layer_set_background_color(&moonPercent, GColorClear);
+    text_layer_set_font(&moonPercent, fonts_get_system_font(FONT_KEY_GOTHIC_14));
+    text_layer_set_text_alignment(&moonPercent, GTextAlignmentCenter);
+
     text_layer_init(&moonLeft, GRect(0, 102, 50, 168-102 /* height */));
     text_layer_set_text_color(&moonLeft, GColorWhite);
     text_layer_set_background_color(&moonLeft, GColorClear);
@@ -263,6 +280,7 @@ void handle_init(AppContextRef ctx)
     layer_add_child(&window.layer, &moonLayer.layer);
     layer_add_child(&window.layer, &moonLeft.layer);
     layer_add_child(&window.layer, &moonRight.layer);
+    layer_add_child(&window.layer, &moonPercent.layer);
 }
 
 void handle_deinit(AppContextRef ctx)
