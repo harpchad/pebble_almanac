@@ -205,7 +205,7 @@ double sin_alt(int iobj,double mjd0,double hour,double lambda,double cphi,double
  * 1 = sun rise / set
  * 2 = sun dawn / dusk
  */
-void sunmooncalc(double jd, int tz, float lat, float lon, int iobj, float* utrise, float* utset)
+void sunmooncalc(double jd, float tz, float lat, float lon, int iobj, float* utrise, float* utset)
 {
     unsigned char rise,sett;
     int nz;

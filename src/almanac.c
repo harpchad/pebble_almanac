@@ -224,7 +224,12 @@ void handle_minute_tick(AppContextRef ctx, PebbleTickEvent* t)
     static char timeText[] = "00:00"; // Needs to be static because it's used by the system later.
     char* time_format;
 
-    if (clock_is_24h_style()) {
+	static const uint32_t const segments[] = {50};
+	VibePattern pat = {
+	    .durations = segments,
+		.num_segments = ARRAY_LENGTH(segments),
+	};
+	if (clock_is_24h_style()) {
         time_format = "%R";
     } else {
         time_format = "%I:%M";
@@ -242,7 +247,7 @@ void handle_minute_tick(AppContextRef ctx, PebbleTickEvent* t)
 #ifdef VIBHOUR
         // vibrate once if between 6am and 10pm
         if (t->tick_time->tm_hour >= 6 && t->tick_time->tm_hour <= 22)
-            vibes_short_pulse();
+            vibes_enqueue_custom_pattern(pat);
 #endif
         //perform daily tasks is hour is 0
         if (t->tick_time->tm_hour == 0)
