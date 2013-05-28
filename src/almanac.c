@@ -24,6 +24,7 @@ TextLayer moonLayer; // moon phase
 TextLayer moonLeft; // moonrise
 TextLayer moonRight; // moonset
 TextLayer moonPercent;//
+TextLayer location;
 
 //Make fonts global so we can deinit later
 GFont font_roboto;
@@ -224,7 +225,7 @@ void handle_minute_tick(AppContextRef ctx, PebbleTickEvent* t)
     static char timeText[] = "00:00"; // Needs to be static because it's used by the system later.
     char* time_format;
 
-	static const uint32_t const segments[] = {50};
+	static const uint32_t const segments[] = {70};
 	VibePattern pat = {
 	    .durations = segments,
 		.num_segments = ARRAY_LENGTH(segments),
@@ -279,13 +280,19 @@ void handle_init(AppContextRef ctx)
     text_layer_set_font(&dateLayer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
     text_layer_set_text_alignment(&dateLayer, GTextAlignmentCenter);
 
-    text_layer_init(&riseLayer, GRect(0, 150, 144 /* width */, 168-130 /* height */));
+    text_layer_init(&location, GRect(0, 30, 144 /* width */, 168-30 /* height */));
+    text_layer_set_text_color(&location, GColorWhite);
+    text_layer_set_background_color(&location, GColorClear);
+    text_layer_set_font(&location, fonts_get_system_font(FONT_KEY_GOTHIC_14));
+    text_layer_set_text_alignment(&location, GTextAlignmentCenter);
+
+    text_layer_init(&riseLayer, GRect(0, 150, 144 /* width */, 168-150 /* height */));
     text_layer_set_text_color(&riseLayer, GColorWhite);
     text_layer_set_background_color(&riseLayer, GColorClear);
     text_layer_set_font(&riseLayer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
     text_layer_set_text_alignment(&riseLayer, GTextAlignmentLeft);
 
-    text_layer_init(&setLayer, GRect(0, 150, 144 /* width */, 168-130 /* height */));
+    text_layer_init(&setLayer, GRect(0, 150, 144 /* width */, 168-150 /* height */));
     text_layer_set_text_color(&setLayer, GColorWhite);
     text_layer_set_background_color(&setLayer, GColorClear);
     text_layer_set_font(&setLayer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
@@ -317,6 +324,8 @@ void handle_init(AppContextRef ctx)
 
     handle_day(ctx, NULL);
     handle_minute_tick(ctx, NULL);
+	text_layer_set_text(&location, LOC);
+	
     layer_add_child(&window.layer, &timeLayer.layer);
     layer_add_child(&window.layer, &dateLayer.layer);
     layer_add_child(&window.layer, &riseLayer.layer);
@@ -325,6 +334,7 @@ void handle_init(AppContextRef ctx)
     layer_add_child(&window.layer, &moonLeft.layer);
     layer_add_child(&window.layer, &moonRight.layer);
     layer_add_child(&window.layer, &moonPercent.layer);
+	layer_add_child(&window.layer, &location.layer);
 }
 
 void handle_deinit(AppContextRef ctx)
