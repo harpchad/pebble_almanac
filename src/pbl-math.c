@@ -42,7 +42,8 @@ float pbl_round(float x)
 float pbl_atan(float x)
 {
     if (x>0) {
-        return (M_PI/2)*(0.596227*x + x*x)/(1 + 2*0.596227*x + x*x);
+        //return (M_PI/2)*(0.596227*x + x*x)/(1 + 2*0.596227*x + x*x);
+		return (M_PI/2)*( 0.640388203*x + x*x + x*x*x)/( 1 + 1.640388203 * x + 1.640388203 * x*x + x*x*x);
     } else {
         return -(pbl_atan(-x));
     }
