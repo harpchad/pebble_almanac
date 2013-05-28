@@ -286,13 +286,13 @@ void handle_init(AppContextRef ctx)
     text_layer_set_font(&location, fonts_get_system_font(FONT_KEY_GOTHIC_14));
     text_layer_set_text_alignment(&location, GTextAlignmentCenter);
 
-    text_layer_init(&riseLayer, GRect(0, 150, 144 /* width */, 168-150 /* height */));
+    text_layer_init(&riseLayer, GRect(0, 148, 144 /* width */, 168-148 /* height */));
     text_layer_set_text_color(&riseLayer, GColorWhite);
     text_layer_set_background_color(&riseLayer, GColorClear);
     text_layer_set_font(&riseLayer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
     text_layer_set_text_alignment(&riseLayer, GTextAlignmentLeft);
 
-    text_layer_init(&setLayer, GRect(0, 150, 144 /* width */, 168-150 /* height */));
+    text_layer_init(&setLayer, GRect(0, 148, 144 /* width */, 168-148 /* height */));
     text_layer_set_text_color(&setLayer, GColorWhite);
     text_layer_set_background_color(&setLayer, GColorClear);
     text_layer_set_font(&setLayer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
