@@ -11,7 +11,7 @@
 #define MY_UUID { 0x02, 0xFC, 0xB5, 0x2F, 0xD4, 0x05, 0x4F, 0xD7, 0xB1, 0x13, 0x11, 0xE9, 0x76, 0x2B, 0xCA, 0x0C }
 PBL_APP_INFO(MY_UUID,
              "Almanac", "Chad Harp",
-             0, 2, /* App version */
+             2, 0, /* App version */
              RESOURCE_ID_ALMANAC_MENU_ICON,
              APP_INFO_WATCH_FACE);
 
