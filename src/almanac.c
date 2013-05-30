@@ -11,7 +11,7 @@
 #define MY_UUID { 0x02, 0xFC, 0xB5, 0x2F, 0xD4, 0x05, 0x4F, 0xD7, 0xB1, 0x13, 0x11, 0xE9, 0x76, 0x2B, 0xCA, 0x0C }
 PBL_APP_INFO(MY_UUID,
              "Almanac", "Chad Harp",
-             2, 0, /* App version */
+             0, 2, /* App version */
              RESOURCE_ID_ALMANAC_MENU_ICON,
              APP_INFO_WATCH_FACE);
 
@@ -93,10 +93,11 @@ char* thr(float time, char ap)
     if (clock_is_24h_style()) {
         mini_snprintf(fmttime, sizeof(fmttime), "%d:%02d",h,m);
     } else {
-        if (h > 12) {
-            h -= 12;
+        if (h > 11) {
+            if (h > 12) h -= 12;
             mini_snprintf(fmttime, sizeof(fmttime), (ap==1)?"%d:%02dP":"%d:%02d",h,m);
         } else {
+			if (h == 0) h=12;
             mini_snprintf(fmttime, sizeof(fmttime), (ap==1)?"%d:%02dA":"%d:%02d",h,m);
         }
     }
@@ -111,18 +112,22 @@ char* mthr(float time1, float time2, char* inject)
     int m2 = mins(time2);
     if (clock_is_24h_style()) {
         mini_snprintf(fmttime, sizeof(fmttime), "%d:%02d%s %d:%02d",h1,m1,inject,h2,m2);
-    } else {
-        if (h1 > 12 && h2 > 12) {
-            h1 -= 12;
-            h2 -= 12;
+	} else {
+        if (h1 > 11 && h2 > 11) {
+            if (h1 > 12) h1 -= 12;
+            if (h2 > 12) h2 -= 12;
             mini_snprintf(fmttime, sizeof(fmttime), "%d:%02dP%s %d:%02dP",h1,m1,inject,h2,m2);
-        } else if (h1 > 12) {
-            h1 -= 12;
+        } else if (h1 > 11) {
+			if (h1 > 12) h1 -= 12;
+			if (h2 == 0) h2=12;
             mini_snprintf(fmttime, sizeof(fmttime), "%d:%02dP%s %d:%02dA",h1,m1,inject,h2,m2);
-        } else if (h2 > 12) {
-            h2 -= 12;
+        } else if (h2 > 11) {
+			if (h2 > 12) h2 -= 12;
+			if (h1 == 0) h1=12;
             mini_snprintf(fmttime, sizeof(fmttime), "%d:%02dA%s %d:%02dP",h1,m1,inject,h2,m2);
         } else {
+			if (h1 == 0) h1=12;
+			if (h2 == 0) h2=12;
             mini_snprintf(fmttime, sizeof(fmttime), "%d:%02dA%s %d:%02dA",h1,m1,inject,h2,m2);
         }
     }
